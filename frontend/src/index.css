@@ -1,0 +1,23 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-background text-white antialiased selection:bg-primary/30;
+  }
+}
+
+@layer utilities {
+  .glassmorphism {
+    @apply bg-surface/60 backdrop-blur-xl border border-white/10;
+  }
+  
+  .glassmorphism-card {
+    @apply bg-surface/40 backdrop-blur-lg border border-white/5 rounded-2xl shadow-xl transition-all duration-300 hover:border-white/20;
+  }
+
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary;
+  }
+}
