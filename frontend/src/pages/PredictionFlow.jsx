@@ -134,7 +134,7 @@ const PredictionFlow = () => {
       formDataUpload.append("resume", file);
 
       const response = await axios.post(
-        "http://127.0.0.1:8000/upload-resume",
+        "https://salary-predictor-ml-so9x.onrender.com/upload-resume",
         formDataUpload,
         {
           headers: {
