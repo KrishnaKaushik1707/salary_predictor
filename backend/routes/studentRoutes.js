@@ -26,24 +26,21 @@ router.post("/predict", async (req, res) => {
     // Flask ML API Call
     // =========================
 
-    const mlResponse = await axios.post(
-      "https://salary-predictor-ml-so9x.onrender.com/predict",
-      {
-        Age: 22,
-        Gender: 1,
-        Degree: 0,
-        Branch: 1,
-        CGPA: cgpa,
-        Internships: internships,
-        Projects: projects,
-        Coding_Skills: dsaSkill,
-        Communication_Skills: communicationSkill,
-        Aptitude_Test_Score: 85,
-        Soft_Skills_Rating: 8,
-        Certifications: certifications,
-        Backlogs: 0,
-      },
-    );
+    const mlResponse = await axios.post(`${process.env.ML_API_URL}/predict`, {
+      Age: 22,
+      Gender: 1,
+      Degree: 0,
+      Branch: 1,
+      CGPA: cgpa,
+      Internships: internships,
+      Projects: projects,
+      Coding_Skills: dsaSkill,
+      Communication_Skills: communicationSkill,
+      Aptitude_Test_Score: 85,
+      Soft_Skills_Rating: 8,
+      Certifications: certifications,
+      Backlogs: 0,
+    });
 
     const prediction = mlResponse.data.prediction;
 
