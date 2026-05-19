@@ -1,6 +1,9 @@
 const express = require("express");
+
 const router = express.Router();
+
 const axios = require("axios");
+
 const Student = require("../models/Student");
 
 router.post("/predict", async (req, res) => {
@@ -14,9 +17,15 @@ router.post("/predict", async (req, res) => {
       internships,
       projects,
       certifications,
+      resumeSkills,
+      atsScore,
+      jobDescription,
     } = req.body;
 
-    // Call Flask ML API
+    // =========================
+    // Flask ML API Call
+    // =========================
+
     const mlResponse = await axios.post("http://127.0.0.1:8000/predict", {
       Age: 22,
       Gender: 1,
@@ -34,66 +43,96 @@ router.post("/predict", async (req, res) => {
     });
 
     const prediction = mlResponse.data.prediction;
+
+    const placementProbability = mlResponse.data.placementProbability;
+
+    const expectedPackage = mlResponse.data.expectedPackage;
+
+    // =========================
+    // AI Recommendations
+    // =========================
+
     const recommendations = [];
 
-    // DSA Recommendation
     if (dsaSkill < 7) {
       recommendations.push("Improve Data Structures and Algorithms skills.");
     }
 
-    // Communication
     if (communicationSkill < 7) {
-      recommendations.push(
-        "Work on communication and interview speaking skills.",
-      );
+      recommendations.push("Improve communication and interview confidence.");
     }
 
-    // Projects
     if (projects < 2) {
-      recommendations.push(
-        "Build more real-world projects to strengthen your resume.",
-      );
+      recommendations.push("Build more real-world full stack projects.");
     }
 
-    // Internships
     if (internships === 0) {
-      recommendations.push("Try to gain internship experience.");
+      recommendations.push("Try gaining internship experience.");
     }
 
-    // Certifications
     if (certifications < 2) {
-      recommendations.push("Complete industry-recognized certifications.");
+      recommendations.push("Complete more industry certifications.");
     }
 
-    // ATS Score
     if (atsScore < 70) {
       recommendations.push(
-        "Improve your ATS resume score with better keywords and projects.",
+        "Improve ATS score with better keywords and project descriptions.",
       );
     }
 
-    // Resume Skills
-    if (!resumeSkills.includes("react")) {
-      recommendations.push(
-        "Learning React can improve frontend opportunities.",
+    // =========================
+    // JOB DESCRIPTION MATCHING
+    // =========================
+
+    // =========================
+    // JOB DESCRIPTION MATCHING
+    // =========================
+
+    const jdKeywords = jobDescription
+      .toLowerCase()
+      .split(/[\s,.\n]+/)
+      .filter((word) => word.length > 2);
+
+    const uniqueJDKeywords = [...new Set(jdKeywords)];
+
+    const matchedSkills = [];
+
+    const missingSkills = [];
+
+    // matched skills
+    resumeSkills.forEach((skill) => {
+      if (jobDescription.toLowerCase().includes(skill.toLowerCase())) {
+        matchedSkills.push(skill);
+      }
+    });
+
+    // missing skills
+    uniqueJDKeywords.forEach((word) => {
+      const exists = resumeSkills.some(
+        (skill) => skill.toLowerCase() === word.toLowerCase(),
+      );
+
+      if (!exists) {
+        missingSkills.push(word);
+      }
+    });
+
+    // remove duplicates
+    const finalMissingSkills = [...new Set(missingSkills)].slice(0, 10);
+
+    // match percentage
+    let matchPercentage = 0;
+
+    if (resumeSkills.length > 0) {
+      matchPercentage = Math.round(
+        (matchedSkills.length / resumeSkills.length) * 100,
       );
     }
 
-    if (!resumeSkills.includes("mongodb")) {
-      recommendations.push("Add MongoDB/database skills to your profile.");
-    }
+    // =========================
+    // Save To MongoDB
+    // =========================
 
-    if (!resumeSkills.includes("machine learning")) {
-      recommendations.push(
-        "Learning Machine Learning can improve AI-related opportunities.",
-      );
-    }
-
-    const placementProbability = prediction === "Placed" ? 85 : 35;
-
-    const expectedPackage = prediction === "Placed" ? 8.5 : 3.0;
-
-    // Save to MongoDB
     const student = new Student({
       name,
       email,
@@ -109,17 +148,34 @@ router.post("/predict", async (req, res) => {
 
     await student.save();
 
-    // Send response to frontend
+    // =========================
+    // Send Response
+    // =========================
+
     res.json({
-      placementProbability,
-      expectedPackage,
+      success: true,
+
       prediction,
+
+      placementProbability,
+
+      expectedPackage,
+
+      atsScore,
+
       recommendations,
+
+      matchedSkills,
+
+      missingSkills: finalMissingSkills,
+
+      matchPercentage,
     });
   } catch (error) {
     console.log(error);
 
     res.status(500).json({
+      success: false,
       message: error.message,
     });
   }
