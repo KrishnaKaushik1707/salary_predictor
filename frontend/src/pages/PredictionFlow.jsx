@@ -80,7 +80,7 @@ const PredictionFlow = () => {
           setIsPredicting(true);
 
           const response = await axios.post(
-            "http://localhost:1234/api/students/predict",
+            "https://salary-predictor-backend-639w.onrender.com/api/students/predict",
             {
               name: "Krishna",
               email: "krishna@gmail.com",
