@@ -311,8 +311,40 @@ def predict():
 def home():
 
     return jsonify({
-        "message": "Placement Prediction API Running"
-    })
+
+    "success": True,
+
+    "prediction": result,
+
+    "placementProbability": round(
+        probability,
+        2
+    ),
+
+    "expectedPackage": package,
+
+    "recommendations": [
+        "Improve DSA problem solving",
+        "Build more real-world projects",
+        "Strengthen communication skills",
+        "Practice aptitude regularly"
+    ],
+
+    "matchPercentage": 78,
+
+    "matchedSkills": [
+        "python",
+        "react",
+        "node.js",
+        "mongodb"
+    ],
+
+    "missingSkills": [
+        "docker",
+        "aws",
+        "kubernetes"
+    ]
+})
 
 
 # =========================
