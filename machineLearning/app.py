@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+
 import joblib
 import pandas as pd
 import pdfplumber
@@ -12,19 +13,21 @@ import spacy
 
 app = Flask(__name__)
 
-# Enable React frontend connection
-CORS(app, origins=["http://localhost:5173"])
+# Enable CORS for both local + deployed frontend
+CORS(app, origins=[
+    "http://localhost:5173",
+    "https://salarypredictorapp.vercel.app"
+])
 
-# Create uploads folder automatically
+# Upload folder
 UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-# Load trained ML model
+# Load ML model
 model = joblib.load("placement_model.pkl")
 
 # Load spaCy NLP model
 nlp = spacy.load("en_core_web_sm")
-
 
 # =========================
 # RESUME TEXT EXTRACTION
@@ -60,7 +63,6 @@ def extract_skills(text):
 
     text = text.lower()
 
-    # Dynamic Tech Keywords
     tech_keywords = [
 
         "python",
@@ -71,8 +73,10 @@ def extract_skills(text):
 
         "react",
         "react.js",
+
         "node",
         "node.js",
+
         "express",
         "express.js",
 
@@ -94,6 +98,7 @@ def extract_skills(text):
         "tensorflow",
         "pytorch",
         "scikit-learn",
+
         "pandas",
         "numpy",
 
@@ -111,6 +116,7 @@ def extract_skills(text):
 
         "flask",
         "django",
+
         "mern",
         "api"
     ]
@@ -122,7 +128,6 @@ def extract_skills(text):
         if keyword in text:
             detected_skills.append(keyword)
 
-    # Remove duplicates
     return list(set(detected_skills))
 
 
@@ -140,19 +145,19 @@ def calculate_ats_score(
 
     score = 0
 
-    # Skills Score
+    # Skills
     score += min(len(skills) * 3, 30)
 
-    # CGPA Score
+    # CGPA
     score += cgpa * 3
 
-    # Projects Score
+    # Projects
     score += min(projects * 5, 20)
 
-    # Internship Score
+    # Internships
     score += min(internships * 10, 20)
 
-    # Certification Score
+    # Certifications
     score += min(certifications * 4, 10)
 
     return min(round(score), 100)
@@ -167,7 +172,6 @@ def upload_resume():
 
     try:
 
-        # Check file exists
         if "resume" not in request.files:
 
             return jsonify({
@@ -177,7 +181,6 @@ def upload_resume():
 
         file = request.files["resume"]
 
-        # Check filename
         if file.filename == "":
 
             return jsonify({
@@ -199,8 +202,7 @@ def upload_resume():
         # Extract skills
         skills = extract_skills(text)
 
-        # Dummy values for ATS score
-        # Later connect frontend values dynamically
+        # Dummy ATS calculation
         ats_score = calculate_ats_score(
             skills,
             8.5,
@@ -209,12 +211,16 @@ def upload_resume():
             2
         )
 
-        # Return response
         return jsonify({
+
             "success": True,
+
             "skills": skills,
+
             "resumeText": text[:1000],
+
             "atsScore": ats_score
+
         })
 
     except Exception as e:
@@ -236,7 +242,7 @@ def predict():
 
         data = request.json
 
-        # Create dataframe for prediction
+        # Create dataframe
         features = pd.DataFrame([{
 
             "Age": data["Age"],
@@ -258,13 +264,13 @@ def predict():
         # ML Prediction
         prediction = model.predict(features)
 
-        # ML Probability
+        # Probability
         probability = model.predict_proba(features)[0][1] * 100
 
-        # Final Result
+        # Result
         result = "Placed" if prediction[0] == 1 else "Not Placed"
 
-        # Dynamic Package Prediction
+        # Package prediction
         if probability >= 85:
             package = 12.0
 
@@ -283,12 +289,10 @@ def predict():
 
             "prediction": result,
 
-            "placementProbability": round(
-                probability,
-                2
-            ),
+            "placementProbability": round(probability, 2),
 
             "expectedPackage": package
+
         })
 
     except Exception as e:
@@ -312,9 +316,14 @@ def home():
 
 
 # =========================
-# RUN FLASK SERVER
+# RUN SERVER
 # =========================
 
 if __name__ == "__main__":
+
     port = int(os.environ.get("PORT", 8000))
-    app.run(host="0.0.0.0", port=port)
+
+    app.run(
+        host="0.0.0.0",
+        port=port
+    )
